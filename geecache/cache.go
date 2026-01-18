@@ -39,6 +39,6 @@ func (c *cache) cleanExpired() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.lru != nil {
-		c.lru.cleanExpired()
+		c.lru.CleanExpired()
 	}
 }

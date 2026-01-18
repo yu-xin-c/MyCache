@@ -125,8 +125,8 @@ func (c *Cache) removeElement(ele *list.Element) {
 	}
 }
 
-// cleanExpired removes expired items
-func (c *Cache) cleanExpired() {
+// CleanExpired removes expired items
+func (c *Cache) CleanExpired() {
 	now := time.Now()
 	for c.expireHeap.Len() > 0 {
 		item := (*c.expireHeap)[0]
