@@ -1,21 +1,21 @@
 package geecache
 
-// A ByteView holds an immutable view of bytes.
+// ByteView 保存字节的不可变视图。
 type ByteView struct {
 	b []byte
 }
 
-// Len returns the view's length
+// Len 返回视图的长度
 func (v ByteView) Len() int {
 	return len(v.b)
 }
 
-// ByteSlice returns a copy of the data as a byte slice.
+// ByteSlice 返回数据的副本作为字节切片。
 func (v ByteView) ByteSlice() []byte {
 	return cloneBytes(v.b)
 }
 
-// String returns the data as a string, making a copy if necessary.
+// String 将数据作为字符串返回，必要时进行复制。
 func (v ByteView) String() string {
 	return string(v.b)
 }

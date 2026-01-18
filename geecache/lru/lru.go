@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-// Cache is a LRU cache. It is not safe for concurrent access.
+// Cache 是一个 LRU 缓存。它不是并发安全的。
 type Cache struct {
 	maxBytes   int64
 	nbytes     int64
 	ll         *list.List
 	cache      map[string]*list.Element
 	expireHeap *expireHeap
-	// optional and executed when an entry is purged.
+	// 可选的，当条目被清除时执行。
 	OnEvicted func(key string, value Value)
 }
 
@@ -23,7 +23,7 @@ type entry struct {
 	expireAt time.Time
 }
 
-// Value use Len to count how many bytes it takes
+// Value 使用 Len 计算占用多少字节
 type Value interface {
 	Len() int
 }
@@ -51,7 +51,7 @@ func (h *expireHeap) Pop() interface{} {
 	return item
 }
 
-// New is the Constructor of Cache
+// New 是 Cache 的构造函数
 func New(maxBytes int64, onEvicted func(string, Value)) *Cache {
 	eh := &expireHeap{}
 	heap.Init(eh)
@@ -64,7 +64,7 @@ func New(maxBytes int64, onEvicted func(string, Value)) *Cache {
 	}
 }
 
-// Add adds a value to the cache.
+// Add 向缓存中添加值。
 func (c *Cache) Add(key string, value Value, ttl time.Duration) {
 	var expireAt time.Time
 	if ttl > 0 {
@@ -92,7 +92,7 @@ func (c *Cache) Add(key string, value Value, ttl time.Duration) {
 	}
 }
 
-// Get look ups a key's value
+// Get 查找键的值
 func (c *Cache) Get(key string) (value Value, ok bool) {
 	if ele, ok := c.cache[key]; ok {
 		kv := ele.Value.(*entry)
@@ -106,7 +106,7 @@ func (c *Cache) Get(key string) (value Value, ok bool) {
 	return
 }
 
-// RemoveOldest removes the oldest item
+// RemoveOldest 移除最旧的条目
 func (c *Cache) RemoveOldest() {
 	ele := c.ll.Back()
 	if ele != nil {
@@ -114,7 +114,7 @@ func (c *Cache) RemoveOldest() {
 	}
 }
 
-// removeElement removes the given element
+// removeElement 移除给定的元素
 func (c *Cache) removeElement(ele *list.Element) {
 	c.ll.Remove(ele)
 	kv := ele.Value.(*entry)
@@ -125,7 +125,7 @@ func (c *Cache) removeElement(ele *list.Element) {
 	}
 }
 
-// CleanExpired removes expired items
+// CleanExpired 移除过期的条目
 func (c *Cache) CleanExpired() {
 	now := time.Now()
 	for c.expireHeap.Len() > 0 {
@@ -141,7 +141,7 @@ func (c *Cache) CleanExpired() {
 	}
 }
 
-// Len the number of cache entries
+// Len 缓存条目的数量
 func (c *Cache) Len() int {
 	return c.ll.Len()
 }

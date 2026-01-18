@@ -9,26 +9,25 @@ import (
 	"time"
 )
 
-// A Group is a cache namespace and associated data loaded spread over
+// Group 是一个缓存命名空间和相关的数据加载分布
 type Group struct {
 	name      string
 	getter    Getter
 	mainCache cache
 	peers     PeerPicker
-	// use singleflight.Group to make sure that
-	// each key is only fetched once
+	// 使用 singleflight.Group 确保每个键只被获取一次
 	loader *singleflight.Group
 }
 
-// A Getter loads data for a key.
+// Getter 为键加载数据。
 type Getter interface {
 	Get(key string) ([]byte, error)
 }
 
-// A GetterFunc implements Getter with a function.
+// GetterFunc 使用函数实现 Getter 接口。
 type GetterFunc func(key string) ([]byte, error)
 
-// Get implements Getter interface function
+// Get 实现 Getter 接口函数
 func (f GetterFunc) Get(key string) ([]byte, error) {
 	return f(key)
 }
@@ -38,7 +37,7 @@ var (
 	groups = make(map[string]*Group)
 )
 
-// NewGroup create a new instance of Group
+// NewGroup 创建 Group 的新实例
 func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 	if getter == nil {
 		panic("nil Getter")
@@ -53,7 +52,7 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 	}
 	groups[name] = g
 
-	// Start background cleanup goroutine
+	// 启动后台清理协程
 	go func() {
 		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
@@ -65,8 +64,7 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 	return g
 }
 
-// GetGroup returns the named group previously created with NewGroup, or
-// nil if there's no such group.
+// GetGroup 返回之前用 NewGroup 创建的指定名称的组，如果没有这样的组则返回 nil。
 func GetGroup(name string) *Group {
 	mu.RLock()
 	g := groups[name]
@@ -74,7 +72,7 @@ func GetGroup(name string) *Group {
 	return g
 }
 
-// Get value for a key from cache
+// 从缓存中获取键的值
 func (g *Group) Get(key string) (ByteView, error) {
 	if key == "" {
 		return ByteView{}, fmt.Errorf("key is required")
@@ -88,7 +86,7 @@ func (g *Group) Get(key string) (ByteView, error) {
 	return g.load(key)
 }
 
-// RegisterPeers registers a PeerPicker for choosing remote peer
+// RegisterPeers 注册 PeerPicker 用于选择远程对等点
 func (g *Group) RegisterPeers(peers PeerPicker) {
 	if g.peers != nil {
 		panic("RegisterPeerPicker called more than once")
@@ -97,8 +95,8 @@ func (g *Group) RegisterPeers(peers PeerPicker) {
 }
 
 func (g *Group) load(key string) (value ByteView, err error) {
-	// each key is only fetched once (either locally or remotely)
-	// regardless of the number of concurrent callers.
+	// 每个键只被获取一次（本地或远程）
+	// 无论并发调用者的数量如何。
 	viewi, err := g.loader.Do(key, func() (interface{}, error) {
 		if g.peers != nil {
 			if peer, ok := g.peers.PickPeer(key); ok {
@@ -119,10 +117,10 @@ func (g *Group) load(key string) (value ByteView, err error) {
 }
 
 func (g *Group) populateCache(key string, value ByteView) {
-	g.mainCache.add(key, value, 0) // No TTL for loaded data
+	g.mainCache.add(key, value, 0) // 加载的数据没有 TTL
 }
 
-// Set sets a key-value pair with optional TTL
+// Set 设置键值对，可选 TTL
 func (g *Group) Set(key string, value []byte, ttl time.Duration) {
 	view := ByteView{b: cloneBytes(value)}
 	g.mainCache.add(key, view, ttl)

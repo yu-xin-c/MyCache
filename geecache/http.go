@@ -19,9 +19,9 @@ const (
 	defaultReplicas = 50
 )
 
-// HTTPPool implements PeerPicker for a pool of HTTP peers.
+// HTTPPool 为 HTTP 对等点池实现 PeerPicker。
 type HTTPPool struct {
-	// this peer's base URL, e.g. "https://example.net:8000"
+	// 此对等点的基准 URL，例如 "https://example.net:8000"
 	self        string
 	basePath    string
 	mu          sync.Mutex // guards peers and httpGetters
@@ -29,7 +29,7 @@ type HTTPPool struct {
 	httpGetters map[string]*httpGetter // keyed by e.g. "http://10.0.0.2:8008"
 }
 
-// NewHTTPPool initializes an HTTP pool of peers.
+// NewHTTPPool 初始化 HTTP 对等点池。
 func NewHTTPPool(self string) *HTTPPool {
 	return &HTTPPool{
 		self:     self,
@@ -37,18 +37,18 @@ func NewHTTPPool(self string) *HTTPPool {
 	}
 }
 
-// Log info with server name
+// 使用服务器名称记录信息
 func (p *HTTPPool) Log(format string, v ...interface{}) {
 	log.Printf("[Server %s] %s", p.self, fmt.Sprintf(format, v...))
 }
 
-// ServeHTTP handle all http requests
+// ServeHTTP 处理所有 HTTP 请求
 func (p *HTTPPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(r.URL.Path, p.basePath) {
 		panic("HTTPPool serving unexpected path: " + r.URL.Path)
 	}
 	p.Log("%s %s", r.Method, r.URL.Path)
-	// /<basepath>/<groupname>/<key> required
+	// 需要 /<basepath>/<groupname>/<key>
 	parts := strings.SplitN(r.URL.Path[len(p.basePath):], "/", 2)
 	if len(parts) != 2 {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -70,7 +70,7 @@ func (p *HTTPPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Write the value to the response body as a proto message.
+	// 将值作为 proto 消息写入响应体。
 	body, err := proto.Marshal(&pb.Response{Value: view.ByteSlice()})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -81,7 +81,7 @@ func (p *HTTPPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-// Set updates the pool's list of peers.
+// Set 更新池的对等点列表。
 func (p *HTTPPool) Set(peers ...string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -93,7 +93,7 @@ func (p *HTTPPool) Set(peers ...string) {
 	}
 }
 
-// PickPeer picks a peer according to key
+// PickPeer 根据键选择对等点
 func (p *HTTPPool) PickPeer(key string) (PeerGetter, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
